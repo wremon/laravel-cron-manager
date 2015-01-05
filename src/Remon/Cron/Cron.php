@@ -12,7 +12,7 @@ class Cron {
 
 	public function __construct()
     {
-        self::$crontab = new CrontabRepository(new CrontabAdapter());
+		self::$crontab = new CrontabRepository(new CrontabAdapter());
 		self::$job = new CrontabJob();
 	}
 
@@ -21,9 +21,6 @@ class Cron {
 	 */
 	public static function add($minutes, $hours, $day_of_month, $months, $day_of_week, $command, $enabled = TRUE, $comment)
 	{
-		$crontab = self::$crontab;
-		$job = self::$job;
-
 		if (self::exists(compact(['minutes', 'hours', 'day_of_month', 'months', 'day_of_week', 'command', 'enabled', 'comment']), $command))
 		{
 			echo 'Exists... aborting';
@@ -32,11 +29,11 @@ class Cron {
 
 		$id = self::record(NULL, compact(['minutes', 'hours', 'day_of_month', 'months', 'day_of_week', 'command', 'enabled', 'comment']));
 
-		self::getAttrs($job, compact(['minutes', 'hours', 'day_of_month', 'months', 'day_of_week', 'command', 'enabled', 'id']));
+		self::getAttrs(self::$job, compact(['minutes', 'hours', 'day_of_month', 'months', 'day_of_week', 'command', 'enabled', 'id']));
 
-		$crontab->addJob($job);
+		self::$crontab->addJob(self::$job);
 
-		if (!$crontab->save())
+		if (!self::$crontab->save())
 		{
 			echo 'Error saving job';
 			return FALSE;
@@ -51,10 +48,7 @@ class Cron {
 	 */
 	public static function update($id, $params)
 	{
-		$crontab = self::$crontab;
-		$job = self::$job;
-
-		if(!$results = $crontab->find($id))
+		if(!$results = self::$crontab->find($id))
 		{
 			echo "No job found";
 			return FALSE;
@@ -73,7 +67,7 @@ class Cron {
 			self::getAttrs($job, $params);
 		}
 
-		$crontab->save();
+		self::$crontab->save();
 		echo count($results)." Job(s) updated \r\n";
 
 		return TRUE;
@@ -84,10 +78,7 @@ class Cron {
 	 */
 	public static function delete($id)
 	{
-		$crontab = self::$crontab;
-		$job = self::$job;
-
-		if(!$results = $crontab->find($id))
+		if(!$results = self::$crontab->find($id))
 		{
 			echo "No job found \r\n";
 			return FALSE;
@@ -95,10 +86,10 @@ class Cron {
 
 		foreach ($results as $job)
 		{
-			$crontab->removeJob($job);
+			self::$crontab->removeJob($job);
 		}
 
-		$crontab->save();
+		self::$crontab->save();
 
 		CronJob::find($id)->delete();
 
@@ -153,14 +144,14 @@ class Cron {
 	 */
 	private static function record($id, $attr)
 	{
-		$log = CronJob::findOrNew($id);
+		$record = CronJob::findOrNew($id);
 
 		foreach ($attr as $key => $value)
 		{
-			$log->{$key} = $value;
+			$record->{$key} = $value;
 		}
-		$log->save();
-		return $log->id;
+		$record->save();
+		return $record->id;
 	}
 
 	/**
@@ -173,5 +164,4 @@ class Cron {
 			return array_except($result["attributes"], ['id', 'comment', 'deleted_at', 'created_at', 'updated_at']);
 		}
 	}
-
 }
