@@ -97,6 +97,14 @@ class Cron {
 
 		return TRUE;
 	}
+	
+	/**
+	 * Check if a cronjob exists
+	 */
+	public static function has($id)
+	{
+		if (CronJob::find($id)) return TRUE;
+	}
 
 	/**
 	 * Check if the command is already in use
